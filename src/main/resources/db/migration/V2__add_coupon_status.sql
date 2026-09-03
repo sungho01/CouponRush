@@ -1,0 +1,12 @@
+ALTER TABLE coupon
+    ADD COLUMN status VARCHAR(255);
+
+UPDATE coupon
+SET status = CASE
+    WHEN CURDATE() < start_date THEN 'SCHEDULED'
+    WHEN CURDATE() > end_date THEN 'EXPIRED'
+    ELSE 'ACTIVE'
+END;
+
+ALTER TABLE  coupon
+    MODIFY COLUMN status VARCHAR(255) NOT NULL;
