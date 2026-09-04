@@ -14,4 +14,5 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     @EntityGraph(attributePaths = "coupon")
     Page<MemberCoupon> findAllByMember_Id(Long memberId, Pageable pageable);
     Optional<MemberCoupon> findByIdAndMember_Id(Long couponId, Long memberId);
+    long countByCoupon_Id(Long couponId);
 }

@@ -51,6 +51,33 @@ public class MemberCouponService {
         return new MessageResponseDto("쿠폰이 발급됐습니다.");
     }
 
+    @Transactional
+    public MessageResponseDto issueCouponWithPessimisticLock(String loginId, Long couponId){
+        Member member = memberRepository.findByLoginId(loginId)
+                .orElseThrow(()-> new IllegalArgumentException("유효하지 않은 회원입니다."));
+
+        Coupon coupon = couponRepository.findByIdWithPessimisticLock(couponId)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 쿠폰입니다."));
+
+        if(memberCouponRepository.existsByMember_IdAndCoupon_Id(member.getId(), couponId)){
+            throw new IllegalArgumentException("이미 발급받은 쿠폰입니다.");
+        }
+
+        if(LocalDate.now().isAfter(coupon.getEndDate())){
+            throw new IllegalArgumentException("만료된 쿠폰입니다.");
+        }
+
+        if (coupon.getRemainingQuantity() > 0) {
+            coupon.decreaseRemainingQuantity();
+        } else {
+            throw new IllegalArgumentException("쿠폰 수량이 모두 소진되었습니다.");
+        }
+        MemberCoupon memberCoupon = MemberCoupon.create(member, coupon);
+        memberCouponRepository.save(memberCoupon);
+
+        return new MessageResponseDto("쿠폰이 발급됐습니다.");
+    }
+
     @Transactional(readOnly = true)
     public Page<MemberCouponResponseDto> getMyCoupons(String loginId, Pageable pageable){
         Member member = memberRepository.findByLoginId(loginId)
